@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export default function Home() {
   // Language state
@@ -10,6 +10,9 @@ export default function Home() {
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
 
+  // Stores the microphone stream
+  const streamRef = useRef<MediaStream | null>(null);
+
   // Swap source and target languages
   const swapLanguages = () => {
     const currentSource = sourceLanguage;
@@ -17,9 +20,38 @@ export default function Home() {
     setTargetLanguage(currentSource);
   };
 
-  // Start/stop recording state
-  const toggleRecording = () => {
-    setIsRecording(!isRecording);
+  // Start recording
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+
+      streamRef.current = stream;
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Microphone access error:", error);
+      alert("Unable to access the microphone. Please allow microphone permission.");
+    }
+  };
+
+  // Stop recording
+  const stopRecording = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+
+    setIsRecording(false);
+  };
+
+  // Handle recording button
+  const handleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
   };
 
   return (
@@ -61,14 +93,14 @@ export default function Home() {
       {/* Swap languages */}
       <button onClick={swapLanguages}>🔄 Swap Languages</button>
 
-      {/* Current translation direction */}
+      {/* Translation direction */}
       <p>
         Translating from {sourceLanguage} to {targetLanguage}
       </p>
 
-      {/* Recording controls */}
+      {/* Real microphone controls */}
       <div>
-        <button onClick={toggleRecording}>
+        <button onClick={handleRecording}>
           {isRecording ? "⏹ Stop Recording" : "🎤 Speak"}
         </button>
 
