@@ -10,8 +10,20 @@ export default function Home() {
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
 
-  // Stores the microphone stream
+  // Stores whether an audio recording was captured
+  const [hasRecording, setHasRecording] = useState(false);
+
+  // Stores microphone stream
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Stores the MediaRecorder
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
+  // Stores audio chunks while recording
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  // Stores the final recorded audio
+  const audioBlobRef = useRef<Blob | null>(null);
 
   // Swap source and target languages
   const swapLanguages = () => {
@@ -28,18 +40,47 @@ export default function Home() {
       });
 
       streamRef.current = stream;
+
+      const mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, {
+          type: "audio/webm",
+        });
+
+        audioBlobRef.current = audioBlob;
+        setHasRecording(true);
+
+        // Stop and release microphone
+        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+      };
+
+      mediaRecorder.start();
       setIsRecording(true);
+      setHasRecording(false);
     } catch (error) {
-      console.error("Microphone access error:", error);
+      console.error("Microphone recording error:", error);
       alert("Unable to access the microphone. Please allow microphone permission.");
     }
   };
 
   // Stop recording
   const stopRecording = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
-      streamRef.current = null;
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      mediaRecorderRef.current.stop();
     }
 
     setIsRecording(false);
@@ -98,7 +139,7 @@ export default function Home() {
         Translating from {sourceLanguage} to {targetLanguage}
       </p>
 
-      {/* Real microphone controls */}
+      {/* Recording controls */}
       <div>
         <button onClick={handleRecording}>
           {isRecording ? "⏹ Stop Recording" : "🎤 Speak"}
@@ -107,6 +148,10 @@ export default function Home() {
         <p>
           {isRecording ? "🔴 Recording..." : "⚪ Ready to speak"}
         </p>
+
+        {hasRecording && (
+          <p>✅ Audio recording captured successfully!</p>
+        )}
       </div>
 
       {/* Original speech */}
