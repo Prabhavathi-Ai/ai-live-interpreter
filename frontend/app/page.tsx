@@ -9,9 +9,10 @@ export default function Home() {
 
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
-
-  // Stores whether an audio recording was captured
   const [hasRecording, setHasRecording] = useState(false);
+
+  // Backend connection state
+  const [backendStatus, setBackendStatus] = useState("Not checked");
 
   // Stores microphone stream
   const streamRef = useRef<MediaStream | null>(null);
@@ -46,12 +47,14 @@ export default function Home() {
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
+      // Collect audio chunks
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
+      // Create the final audio Blob when recording stops
       mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
@@ -70,7 +73,9 @@ export default function Home() {
       setHasRecording(false);
     } catch (error) {
       console.error("Microphone recording error:", error);
-      alert("Unable to access the microphone. Please allow microphone permission.");
+      alert(
+        "Unable to access the microphone. Please allow microphone permission."
+      );
     }
   };
 
@@ -86,12 +91,28 @@ export default function Home() {
     setIsRecording(false);
   };
 
-  // Handle recording button
+  // Handle Speak / Stop Recording button
   const handleRecording = () => {
     if (isRecording) {
       stopRecording();
     } else {
       startRecording();
+    }
+  };
+
+  // Check connection to FastAPI backend
+  const checkBackend = async () => {
+    try {
+      setBackendStatus("Checking...");
+
+      const response = await fetch("http://127.0.0.1:8000/health");
+
+      const data = await response.json();
+
+      setBackendStatus(data.status);
+    } catch (error) {
+      console.error("Backend connection error:", error);
+      setBackendStatus("Backend unavailable");
     }
   };
 
@@ -104,7 +125,7 @@ export default function Home() {
       {/* Source language */}
       <div>
         <label>
-          From:
+          From:{" "}
           <select
             value={sourceLanguage}
             onChange={(event) => setSourceLanguage(event.target.value)}
@@ -119,7 +140,7 @@ export default function Home() {
       {/* Target language */}
       <div>
         <label>
-          To:
+          To:{" "}
           <select
             value={targetLanguage}
             onChange={(event) => setTargetLanguage(event.target.value)}
@@ -170,6 +191,15 @@ export default function Home() {
       <div>
         <button>🔊 Play Translation</button>
       </div>
+
+      {/* Backend connection */}
+      <section>
+        <h2>Backend Connection</h2>
+
+        <button onClick={checkBackend}>Check Backend</button>
+
+        <p>Status: {backendStatus}</p>
+      </section>
     </main>
   );
 }
