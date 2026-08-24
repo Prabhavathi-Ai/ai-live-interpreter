@@ -3,39 +3,33 @@
 import { useRef, useState } from "react";
 
 export default function Home() {
-  // Language state
   const [sourceLanguage, setSourceLanguage] = useState("English");
   const [targetLanguage, setTargetLanguage] = useState("Tamil");
 
-  // Recording state
   const [isRecording, setIsRecording] = useState(false);
   const [hasRecording, setHasRecording] = useState(false);
 
-  // Backend connection state
   const [backendStatus, setBackendStatus] = useState("Not checked");
+  const [uploadStatus, setUploadStatus] = useState("No audio uploaded");
 
-  // Stores microphone stream
   const streamRef = useRef<MediaStream | null>(null);
-
-  // Stores the MediaRecorder
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-
-  // Stores audio chunks while recording
   const audioChunksRef = useRef<Blob[]>([]);
-
-  // Stores the final recorded audio
   const audioBlobRef = useRef<Blob | null>(null);
 
-  // Swap source and target languages
+  // Swap languages
   const swapLanguages = () => {
     const currentSource = sourceLanguage;
+
     setSourceLanguage(targetLanguage);
     setTargetLanguage(currentSource);
   };
 
-  // Start recording
+  // Start microphone recording
   const startRecording = async () => {
     try {
+      setUploadStatus("No audio uploaded");
+
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
@@ -47,15 +41,13 @@ export default function Home() {
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
-      // Collect audio chunks
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
         }
       };
 
-      // Create the final audio Blob when recording stops
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, {
           type: "audio/webm",
         });
@@ -63,16 +55,21 @@ export default function Home() {
         audioBlobRef.current = audioBlob;
         setHasRecording(true);
 
-        // Stop and release microphone
+        // Release microphone
         stream.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
+
+        // Upload recording to FastAPI
+        await uploadAudio(audioBlob);
       };
 
       mediaRecorder.start();
+
       setIsRecording(true);
       setHasRecording(false);
     } catch (error) {
       console.error("Microphone recording error:", error);
+
       alert(
         "Unable to access the microphone. Please allow microphone permission."
       );
@@ -91,7 +88,7 @@ export default function Home() {
     setIsRecording(false);
   };
 
-  // Handle Speak / Stop Recording button
+  // Handle Speak button
   const handleRecording = () => {
     if (isRecording) {
       stopRecording();
@@ -100,18 +97,53 @@ export default function Home() {
     }
   };
 
-  // Check connection to FastAPI backend
+  // Upload recorded audio to FastAPI
+  const uploadAudio = async (audioBlob: Blob) => {
+    try {
+      setUploadStatus("Uploading audio...");
+
+      const formData = new FormData();
+
+      formData.append("file", audioBlob, "recording.webm");
+
+      const response = await fetch("http://127.0.0.1:8000/audio", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      console.log("Backend audio response:", data);
+
+      setUploadStatus("Audio uploaded successfully!");
+    } catch (error) {
+      console.error("Audio upload error:", error);
+
+      setUploadStatus("Audio upload failed");
+    }
+  };
+
+  // Check backend connection
   const checkBackend = async () => {
     try {
       setBackendStatus("Checking...");
 
       const response = await fetch("http://127.0.0.1:8000/health");
 
+      if (!response.ok) {
+        throw new Error(`Backend returned ${response.status}`);
+      }
+
       const data = await response.json();
 
       setBackendStatus(data.status);
     } catch (error) {
       console.error("Backend connection error:", error);
+
       setBackendStatus("Backend unavailable");
     }
   };
@@ -160,7 +192,7 @@ export default function Home() {
         Translating from {sourceLanguage} to {targetLanguage}
       </p>
 
-      {/* Recording controls */}
+      {/* Recording */}
       <div>
         <button onClick={handleRecording}>
           {isRecording ? "⏹ Stop Recording" : "🎤 Speak"}
@@ -173,6 +205,8 @@ export default function Home() {
         {hasRecording && (
           <p>✅ Audio recording captured successfully!</p>
         )}
+
+        <p>{uploadStatus}</p>
       </div>
 
       {/* Original speech */}

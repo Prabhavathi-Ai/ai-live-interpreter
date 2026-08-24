@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -26,4 +26,16 @@ def read_root():
 def health_check():
     return {
         "status": "healthy"
+    }
+
+
+@app.post("/audio")
+async def receive_audio(file: UploadFile = File(...)):
+    audio_data = await file.read()
+
+    return {
+        "message": "Audio received successfully",
+        "filename": file.filename,
+        "content_type": file.content_type,
+        "size": len(audio_data),
     }
