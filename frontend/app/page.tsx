@@ -25,7 +25,7 @@ export default function Home() {
 
   const uploadAudio = async (audioBlob: Blob) => {
     try {
-      setUploadStatus("Uploading audio...");
+      setUploadStatus("Recording... Your audio will be uploaded when you stop.");
 
       const formData = new FormData();
 
