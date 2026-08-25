@@ -17,19 +17,49 @@ export default function Home() {
   const audioChunksRef = useRef<Blob[]>([]);
   const audioBlobRef = useRef<Blob | null>(null);
 
-  // Swap languages
   const swapLanguages = () => {
     const currentSource = sourceLanguage;
-
     setSourceLanguage(targetLanguage);
     setTargetLanguage(currentSource);
   };
 
-  // Start microphone recording
+  const uploadAudio = async (audioBlob: Blob) => {
+    try {
+      setUploadStatus("Uploading audio...");
+
+      const formData = new FormData();
+
+      formData.append(
+        "file",
+        audioBlob,
+        "recording.webm"
+      );
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/audio",
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Audio upload failed");
+      }
+
+      const data = await response.json();
+
+      console.log("Audio upload response:", data);
+
+      setUploadStatus("Audio uploaded successfully");
+    } catch (error) {
+      console.error("Audio upload error:", error);
+      setUploadStatus("Audio upload failed");
+    }
+  };
+
   const startRecording = async () => {
     try {
-      setUploadStatus("No audio uploaded");
-
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
@@ -48,18 +78,23 @@ export default function Home() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, {
-          type: "audio/webm",
-        });
+        const audioBlob = new Blob(
+          audioChunksRef.current,
+          {
+            type: "audio/webm",
+          }
+        );
 
         audioBlobRef.current = audioBlob;
+
         setHasRecording(true);
 
-        // Release microphone
-        stream.getTracks().forEach((track) => track.stop());
+        stream.getTracks().forEach((track) => {
+          track.stop();
+        });
+
         streamRef.current = null;
 
-        // Upload recording to FastAPI
         await uploadAudio(audioBlob);
       };
 
@@ -67,6 +102,7 @@ export default function Home() {
 
       setIsRecording(true);
       setHasRecording(false);
+      setUploadStatus("Recording audio...");
     } catch (error) {
       console.error("Microphone recording error:", error);
 
@@ -76,7 +112,6 @@ export default function Home() {
     }
   };
 
-  // Stop recording
   const stopRecording = () => {
     if (
       mediaRecorderRef.current &&
@@ -88,7 +123,6 @@ export default function Home() {
     setIsRecording(false);
   };
 
-  // Handle Speak button
   const handleRecording = () => {
     if (isRecording) {
       stopRecording();
@@ -97,45 +131,16 @@ export default function Home() {
     }
   };
 
-  // Upload recorded audio to FastAPI
-  const uploadAudio = async (audioBlob: Blob) => {
-    try {
-      setUploadStatus("Uploading audio...");
-
-      const formData = new FormData();
-
-      formData.append("file", audioBlob, "recording.webm");
-
-      const response = await fetch("http://127.0.0.1:8000/audio", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      console.log("Backend audio response:", data);
-
-      setUploadStatus("Audio uploaded successfully!");
-    } catch (error) {
-      console.error("Audio upload error:", error);
-
-      setUploadStatus("Audio upload failed");
-    }
-  };
-
-  // Check backend connection
   const checkBackend = async () => {
     try {
       setBackendStatus("Checking...");
 
-      const response = await fetch("http://127.0.0.1:8000/health");
+      const response = await fetch(
+        "http://127.0.0.1:8000/health"
+      );
 
       if (!response.ok) {
-        throw new Error(`Backend returned ${response.status}`);
+        throw new Error("Backend health check failed");
       }
 
       const data = await response.json();
@@ -154,13 +159,14 @@ export default function Home() {
 
       <p>Speak. Translate. Understand.</p>
 
-      {/* Source language */}
       <div>
         <label>
           From:{" "}
           <select
             value={sourceLanguage}
-            onChange={(event) => setSourceLanguage(event.target.value)}
+            onChange={(event) =>
+              setSourceLanguage(event.target.value)
+            }
           >
             <option>English</option>
             <option>Tamil</option>
@@ -169,13 +175,14 @@ export default function Home() {
         </label>
       </div>
 
-      {/* Target language */}
       <div>
         <label>
           To:{" "}
           <select
             value={targetLanguage}
-            onChange={(event) => setTargetLanguage(event.target.value)}
+            onChange={(event) =>
+              setTargetLanguage(event.target.value)
+            }
           >
             <option>Tamil</option>
             <option>English</option>
@@ -184,55 +191,64 @@ export default function Home() {
         </label>
       </div>
 
-      {/* Swap languages */}
-      <button onClick={swapLanguages}>🔄 Swap Languages</button>
+      <button onClick={swapLanguages}>
+        🔄 Swap Languages
+      </button>
 
-      {/* Translation direction */}
       <p>
         Translating from {sourceLanguage} to {targetLanguage}
       </p>
 
-      {/* Recording */}
       <div>
         <button onClick={handleRecording}>
-          {isRecording ? "⏹ Stop Recording" : "🎤 Speak"}
+          {isRecording
+            ? "⏹ Stop Recording"
+            : "🎤 Speak"}
         </button>
 
         <p>
-          {isRecording ? "🔴 Recording..." : "⚪ Ready to speak"}
+          {isRecording
+            ? "🔴 Recording..."
+            : "⚪ Ready to speak"}
         </p>
 
         {hasRecording && (
-          <p>✅ Audio recording captured successfully!</p>
+          <p>
+            ✅ Audio recording captured successfully!
+          </p>
         )}
 
-        <p>{uploadStatus}</p>
+        <p>
+          Upload status: {uploadStatus}
+        </p>
       </div>
 
-      {/* Original speech */}
       <section>
         <h2>Original</h2>
         <p>Your speech will appear here.</p>
       </section>
 
-      {/* Translation */}
       <section>
         <h2>Translation</h2>
         <p>Your translation will appear here.</p>
       </section>
 
-      {/* Audio playback */}
       <div>
-        <button>🔊 Play Translation</button>
+        <button>
+          🔊 Play Translation
+        </button>
       </div>
 
-      {/* Backend connection */}
       <section>
         <h2>Backend Connection</h2>
 
-        <button onClick={checkBackend}>Check Backend</button>
+        <button onClick={checkBackend}>
+          Check Backend
+        </button>
 
-        <p>Status: {backendStatus}</p>
+        <p>
+          Status: {backendStatus}
+        </p>
       </section>
     </main>
   );
