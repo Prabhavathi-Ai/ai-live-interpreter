@@ -48,3 +48,20 @@ async def receive_audio(file: UploadFile = File(...)):
         "filename": file_path.name,
         "size": len(audio_data),
     }
+
+
+@app.get("/audio/status")
+def audio_status():
+    file_path = UPLOAD_DIR / "latest_recording.webm"
+
+    if not file_path.exists():
+        return {
+            "status": "no_audio",
+            "message": "No audio recording is available"
+        }
+
+    return {
+        "status": "audio_available",
+        "filename": file_path.name,
+        "size": file_path.stat().st_size,
+    }
