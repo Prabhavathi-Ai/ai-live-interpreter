@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+# Allow the Next.js frontend to communicate with FastAPI
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
@@ -16,6 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Folder where recordings are stored
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
@@ -46,6 +48,7 @@ async def receive_audio(file: UploadFile = File(...)):
     return {
         "message": "Audio saved successfully",
         "filename": file_path.name,
+        "content_type": file.content_type,
         "size": len(audio_data),
     }
 
@@ -57,7 +60,7 @@ def audio_status():
     if not file_path.exists():
         return {
             "status": "no_audio",
-            "message": "No audio recording is available"
+            "message": "No audio recording found",
         }
 
     return {

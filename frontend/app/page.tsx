@@ -3,34 +3,66 @@
 import { useRef, useState } from "react";
 
 export default function Home() {
+  // Language state
   const [sourceLanguage, setSourceLanguage] = useState("English");
   const [targetLanguage, setTargetLanguage] = useState("Tamil");
 
+  // Recording state
   const [isRecording, setIsRecording] = useState(false);
   const [hasRecording, setHasRecording] = useState(false);
 
+  // Backend state
   const [backendStatus, setBackendStatus] = useState("Not checked");
-  const [uploadStatus, setUploadStatus] = useState("No audio uploaded");
 
-  const [audioStatus, setAudioStatus] = useState("Not checked");
-  const [audioSize, setAudioSize] = useState<number | null>(null);
+  // Audio status
+  const [audioStatus, setAudioStatus] = useState("No audio uploaded");
 
+  // Microphone stream
   const streamRef = useRef<MediaStream | null>(null);
+
+  // MediaRecorder
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+
+  // Audio chunks
   const audioChunksRef = useRef<Blob[]>([]);
+
+  // Final audio Blob
   const audioBlobRef = useRef<Blob | null>(null);
 
+  // Swap languages
   const swapLanguages = () => {
     const currentSource = sourceLanguage;
+
     setSourceLanguage(targetLanguage);
     setTargetLanguage(currentSource);
   };
 
+  // Check backend
+  const checkBackend = async () => {
+    try {
+      setBackendStatus("Checking...");
+
+      const response = await fetch(
+        "http://127.0.0.1:8000/health"
+      );
+
+      if (!response.ok) {
+        throw new Error("Backend health check failed");
+      }
+
+      const data = await response.json();
+
+      setBackendStatus(data.status);
+    } catch (error) {
+      console.error("Backend connection error:", error);
+
+      setBackendStatus("Backend unavailable");
+    }
+  };
+
+  // Check uploaded audio
   const checkAudioStatus = async () => {
     try {
-      setAudioStatus("Checking...");
-      setAudioSize(null);
-
       const response = await fetch(
         "http://127.0.0.1:8000/audio/status"
       );
@@ -42,25 +74,21 @@ export default function Home() {
       const data = await response.json();
 
       if (data.status === "audio_available") {
-        setAudioStatus(
-          `Audio available: ${data.filename}`
-        );
-
-        setAudioSize(data.size);
+        setAudioStatus("Audio available on backend");
       } else {
-        setAudioStatus("No audio recording available");
+        setAudioStatus("No audio found");
       }
     } catch (error) {
       console.error("Audio status error:", error);
-      setAudioStatus("Unable to check audio");
+
+      setAudioStatus("Audio status unavailable");
     }
   };
 
+  // Upload audio
   const uploadAudio = async (audioBlob: Blob) => {
     try {
-      setUploadStatus(
-        "Uploading audio..."
-      );
+      setAudioStatus("Uploading audio...");
 
       const formData = new FormData();
 
@@ -84,28 +112,20 @@ export default function Home() {
 
       const data = await response.json();
 
-      console.log(
-        "Audio upload response:",
-        data
-      );
+      console.log("Audio upload response:", data);
 
-      setUploadStatus(
-        "Audio uploaded successfully"
-      );
+      setAudioStatus("Audio uploaded successfully");
 
+      // Check that backend saved the audio
       await checkAudioStatus();
     } catch (error) {
-      console.error(
-        "Audio upload error:",
-        error
-      );
+      console.error("Audio upload error:", error);
 
-      setUploadStatus(
-        "Audio upload failed"
-      );
+      setAudioStatus("Audio upload failed");
     }
   };
 
+  // Start recording
   const startRecording = async () => {
     try {
       const stream =
@@ -115,21 +135,15 @@ export default function Home() {
 
       streamRef.current = stream;
 
-      const mediaRecorder =
-        new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream);
 
-      mediaRecorderRef.current =
-        mediaRecorder;
+      mediaRecorderRef.current = mediaRecorder;
 
       audioChunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (
-        event
-      ) => {
+      mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          audioChunksRef.current.push(
-            event.data
-          );
+          audioChunksRef.current.push(event.data);
         }
       };
 
@@ -141,19 +155,18 @@ export default function Home() {
           }
         );
 
-        audioBlobRef.current =
-          audioBlob;
+        audioBlobRef.current = audioBlob;
 
         setHasRecording(true);
 
-        stream
-          .getTracks()
-          .forEach((track) => {
-            track.stop();
-          });
+        // Release microphone
+        stream.getTracks().forEach((track) => {
+          track.stop();
+        });
 
         streamRef.current = null;
 
+        // Upload recording
         await uploadAudio(audioBlob);
       };
 
@@ -161,11 +174,7 @@ export default function Home() {
 
       setIsRecording(true);
       setHasRecording(false);
-      setUploadStatus(
-        "Recording audio..."
-      );
-      setAudioStatus("Waiting for upload...");
-      setAudioSize(null);
+      setAudioStatus("Recording...");
     } catch (error) {
       console.error(
         "Microphone recording error:",
@@ -178,11 +187,11 @@ export default function Home() {
     }
   };
 
+  // Stop recording
   const stopRecording = () => {
     if (
       mediaRecorderRef.current &&
-      mediaRecorderRef.current.state !==
-        "inactive"
+      mediaRecorderRef.current.state !== "inactive"
     ) {
       mediaRecorderRef.current.stop();
     }
@@ -190,6 +199,7 @@ export default function Home() {
     setIsRecording(false);
   };
 
+  // Recording button
   const handleRecording = () => {
     if (isRecording) {
       stopRecording();
@@ -198,52 +208,20 @@ export default function Home() {
     }
   };
 
-  const checkBackend = async () => {
-    try {
-      setBackendStatus("Checking...");
-
-      const response = await fetch(
-        "http://127.0.0.1:8000/health"
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          "Backend health check failed"
-        );
-      }
-
-      const data = await response.json();
-
-      setBackendStatus(data.status);
-    } catch (error) {
-      console.error(
-        "Backend connection error:",
-        error
-      );
-
-      setBackendStatus(
-        "Backend unavailable"
-      );
-    }
-  };
-
   return (
     <main>
       <h1>AI Live Interpreter</h1>
 
-      <p>
-        Speak. Translate. Understand.
-      </p>
+      <p>Speak. Translate. Understand.</p>
 
+      {/* Source language */}
       <div>
         <label>
           From:{" "}
           <select
             value={sourceLanguage}
             onChange={(event) =>
-              setSourceLanguage(
-                event.target.value
-              )
+              setSourceLanguage(event.target.value)
             }
           >
             <option>English</option>
@@ -253,15 +231,14 @@ export default function Home() {
         </label>
       </div>
 
+      {/* Target language */}
       <div>
         <label>
           To:{" "}
           <select
             value={targetLanguage}
             onChange={(event) =>
-              setTargetLanguage(
-                event.target.value
-              )
+              setTargetLanguage(event.target.value)
             }
           >
             <option>Tamil</option>
@@ -271,16 +248,17 @@ export default function Home() {
         </label>
       </div>
 
+      {/* Swap languages */}
       <button onClick={swapLanguages}>
         🔄 Swap Languages
       </button>
 
       <p>
-        Translating from{" "}
-        {sourceLanguage} to{" "}
+        Translating from {sourceLanguage} to{" "}
         {targetLanguage}
       </p>
 
+      {/* Recording */}
       <div>
         <button onClick={handleRecording}>
           {isRecording
@@ -296,65 +274,45 @@ export default function Home() {
 
         {hasRecording && (
           <p>
-            ✅ Audio recording captured
-            successfully!
+            ✅ Audio recording captured successfully!
           </p>
         )}
 
         <p>
-          Upload status:{" "}
-          {uploadStatus}
+          Audio status: {audioStatus}
         </p>
       </div>
 
-      <section>
-        <h2>Audio Status</h2>
-
-        <button
-          onClick={checkAudioStatus}
-        >
-          Check Saved Audio
-        </button>
-
-        <p>
-          Status: {audioStatus}
-        </p>
-
-        {audioSize !== null && (
-          <p>
-            File size: {audioSize} bytes
-          </p>
-        )}
-      </section>
-
+      {/* Original speech */}
       <section>
         <h2>Original</h2>
+
         <p>
           Your speech will appear here.
         </p>
       </section>
 
+      {/* Translation */}
       <section>
         <h2>Translation</h2>
+
         <p>
           Your translation will appear here.
         </p>
       </section>
 
+      {/* Translation audio */}
       <div>
         <button>
           🔊 Play Translation
         </button>
       </div>
 
+      {/* Backend connection */}
       <section>
-        <h2>
-          Backend Connection
-        </h2>
+        <h2>Backend Connection</h2>
 
-        <button
-          onClick={checkBackend}
-        >
+        <button onClick={checkBackend}>
           Check Backend
         </button>
 
