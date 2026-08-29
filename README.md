@@ -1,30 +1,60 @@
 # AI Live Interpreter
 
-An AI-powered live interpreter that records speech, processes audio locally, and translates between languages.
+An AI-powered live speech interpreter that records spoken audio, processes it locally, and translates speech between languages.
 
-## Current Features
+## Features
 
-- 🎤 Browser microphone recording
-- 🌐 English, Tamil, and Hindi language selection
-- 🔄 Source/target language swapping
-- ⚡ Next.js frontend
-- 🚀 FastAPI backend
-- 📤 Audio upload from frontend to backend
+- 🎤 Microphone-based voice recording
+- 🌐 Multiple language selection
+- 🔄 Source and target language swapping
+- 📤 Audio upload to a FastAPI backend
 - 💾 Local audio recording storage
-- 🧠 Local Whisper speech-to-text setup
-- 🔒 Local Whisper model and recordings are excluded from Git
+- 🧠 Local speech-to-text processing
+- 🔊 Translation playback
+- ❤️ Backend health monitoring
+
+## Supported Languages
+
+Currently planned:
+
+- English
+- Tamil
+- Hindi
+
+More languages can be added later.
+
+## Technology Stack
+
+### Frontend
+
+- Next.js
+- React
+- TypeScript
+- MediaRecorder API
+
+### Backend
+
+- Python
+- FastAPI
+- Uvicorn
+
+### AI
+
+- Whisper
+- Local speech-to-text processing
 
 ## Project Structure
 
 ```text
 AI_Live_Interpreter/
+│
 ├── frontend/
 │   └── app/
 │       └── page.tsx
 │
-└── backend/
-    ├── main.py
-    ├── models/
-    │   └── ggml-base.bin
-    ├── uploads/
-    └── .gitignore
+├── backend/
+│   ├── main.py
+│   ├── .gitignore
+│   └── uploads/
+│
+└── README.md
