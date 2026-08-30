@@ -25,7 +25,8 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 @app.get("/")
 def read_root():
     return {
-        "message": "AI Live Interpreter backend is running"
+        "message": "AI Live Interpreter backend is running",
+        "version": "1.0.0"
     }
 
 
