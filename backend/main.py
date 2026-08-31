@@ -1,4 +1,5 @@
 from pathlib import Path
+from fastapi import FastAPI, File, HTTPException, UploadFile
 
 from fastapi import FastAPI, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
@@ -41,6 +42,12 @@ def health_check():
 @app.post("/audio")
 async def receive_audio(file: UploadFile = File(...)):
     audio_data = await file.read()
+
+    if not audio_data:
+        raise HTTPException(
+            status_code=400,
+            detail="Uploaded audio file is empty"
+        )
 
     file_path = UPLOAD_DIR / "latest_recording.webm"
 
