@@ -170,12 +170,11 @@ export default function Home() {
         // Upload recording
         await uploadAudio(audioBlob);
       };
+mediaRecorder.start();
 
-      mediaRecorder.start();
-
-      setRecordingCount((count) => count + 1);
-      setHasRecording(false);
-      setAudioStatus("Recording...");
+setRecordingCount((count) => count + 1);
+setHasRecording(false);
+setAudioStatus("Recording started");
     } catch (error) {
       console.error(
         "Microphone recording error:",
