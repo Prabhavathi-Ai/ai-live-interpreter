@@ -46,3 +46,9 @@ Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/bui
 - Audio saved locally on the backend
 - Audio status checking
 - Backend health checking
+## Development
+
+This project is currently under active development.
+## License
+
+This project is created for learning and development purposes.
