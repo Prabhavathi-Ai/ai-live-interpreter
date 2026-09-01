@@ -160,6 +160,9 @@ export default function Home() {
 
         setHasRecording(true);
 
+        // Count only successfully captured recordings
+        setRecordingCount((count) => count + 1);
+
         // Release microphone
         stream.getTracks().forEach((track) => {
           track.stop();
@@ -170,11 +173,12 @@ export default function Home() {
         // Upload recording
         await uploadAudio(audioBlob);
       };
-mediaRecorder.start();
 
-setRecordingCount((count) => count + 1);
-setHasRecording(false);
-setAudioStatus("Recording started");
+      mediaRecorder.start();
+
+      setIsRecording(true);
+      setHasRecording(false);
+      setAudioStatus("Recording started");
     } catch (error) {
       console.error(
         "Microphone recording error:",
@@ -280,6 +284,10 @@ setAudioStatus("Recording started");
 
         <p>
           Audio status: {audioStatus}
+        </p>
+
+        <p>
+          Recordings captured: {recordingCount}
         </p>
       </div>
 
