@@ -9,6 +9,7 @@ export default function Home() {
 
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
+  const [recordingCount, setRecordingCount] = useState(0);
   const [hasRecording, setHasRecording] = useState(false);
 
   // Backend state
@@ -172,7 +173,7 @@ export default function Home() {
 
       mediaRecorder.start();
 
-      setIsRecording(true);
+      setRecordingCount((count) => count + 1);
       setHasRecording(false);
       setAudioStatus("Recording...");
     } catch (error) {
