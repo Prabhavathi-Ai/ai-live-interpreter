@@ -178,7 +178,7 @@ export default function Home() {
 
       setIsRecording(true);
       setHasRecording(false);
-      setAudioStatus("Recording started");
+      setAudioStatus("Recording new audio...");
     } catch (error) {
       console.error(
         "Microphone recording error:",
