@@ -216,7 +216,7 @@ export default function Home() {
     <main>
       <h1>AI Live Interpreter</h1>
 
-      <p>Speak. Translate. Understand.</p>
+      <p>Speak. Translate. Understand. In real time.</p>
 
       {/* Source language */}
       <div>
