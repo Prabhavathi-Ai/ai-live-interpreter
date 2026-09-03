@@ -29,7 +29,12 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 def read_root():
     return {
         "message": "AI Live Interpreter backend is running",
-        "version": "1.0.0"
+        "version": "1.1.0",
+        "features": [
+            "audio upload",
+            "audio status",
+            "local Whisper transcription"
+        ]
     }
 
 
