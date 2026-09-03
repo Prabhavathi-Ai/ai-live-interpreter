@@ -1,3 +1,5 @@
+from whisper_service import transcribe_audio
+
 from pathlib import Path
 from fastapi import FastAPI, File, HTTPException, UploadFile
 
@@ -62,18 +64,24 @@ async def receive_audio(file: UploadFile = File(...)):
     }
 
 
-@app.get("/audio/status")
-def audio_status():
+@app.post("/audio")
+async def receive_audio(file: UploadFile = File(...)):
+    audio_data = await file.read()
+
     file_path = UPLOAD_DIR / "latest_recording.webm"
 
-    if not file_path.exists():
-        return {
-            "status": "no_audio",
-            "message": "No audio recording found",
-        }
+    with open(file_path, "wb") as audio_file:
+        audio_file.write(audio_data)
+
+    print("Transcribing audio...")
+
+    text = transcribe_audio(file_path)
+
+    print("Transcription:", text)
 
     return {
-        "status": "audio_available",
+        "message": "Audio transcribed successfully",
         "filename": file_path.name,
-        "size": file_path.stat().st_size,
+        "size": len(audio_data),
+        "text": text,
     }
