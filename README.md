@@ -12,6 +12,7 @@ An AI-powered live speech interpreter that records spoken audio, processes it lo
 - 🧠 Local speech-to-text processing
 - 🔊 Translation playback
 - ❤️ Backend health monitoring
+- active listening on both sides 
 
 ## Supported Languages
 
