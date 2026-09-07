@@ -59,3 +59,25 @@ AI_Live_Interpreter/
 │   └── uploads/
 │
 └── README.md
+
+## Current Development Status
+
+The project currently supports:
+
+- 🎤 Browser microphone recording
+- 📦 Audio upload to the FastAPI backend
+- 💾 Local audio file storage
+- 🔍 Audio availability/status checking
+- 🌐 English, Tamil, and Hindi language selection
+- 🔄 Language swapping
+- 🔗 Frontend and backend communication
+
+### AI Pipeline
+
+The next development stage is integrating local AI models for:
+
+1. Speech-to-Text
+2. Language Translation
+3. Text-to-Speech
+
+The project is designed to run locally using free and open-source AI tools.
