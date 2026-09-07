@@ -81,3 +81,36 @@ The next development stage is integrating local AI models for:
 3. Text-to-Speech
 
 The project is designed to run locally using free and open-source AI tools.
+
+
+## Backend API
+
+The FastAPI backend currently provides:
+
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/` | GET | Backend information |
+| `/health` | GET | Health check |
+| `/audio` | POST | Upload recorded audio |
+| `/audio/status` | GET | Check uploaded audio |
+
+## Project Architecture
+
+```text
+Frontend (Next.js)
+       ↓
+Browser Microphone
+       ↓
+MediaRecorder
+       ↓
+Audio Blob
+       ↓
+FastAPI Backend
+       ↓
+Local Audio Storage
+       ↓
+Future: Speech-to-Text
+       ↓
+Future: Translation
+       ↓
+Future: Text-to-Speech
