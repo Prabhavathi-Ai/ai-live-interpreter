@@ -30,11 +30,7 @@ def read_root():
     return {
         "message": "AI Live Interpreter backend is running",
         "version": "1.1.0",
-        "features": [
-            "audio upload",
-            "audio status",
-            "local Whisper transcription"
-        ]
+        "status": "ready"
     }
 
 
