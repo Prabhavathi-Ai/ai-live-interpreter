@@ -98,7 +98,15 @@ def transcribe_latest_audio():
 
     text = transcribe_audio(str(file_path))
 
+    if not text:
+        return {
+            "status": "empty",
+            "message": "No speech detected",
+            "text": "",
+        }
+
     return {
         "status": "success",
         "text": text,
+        "language": "auto",
     }
