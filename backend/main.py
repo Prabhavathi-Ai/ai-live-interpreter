@@ -86,3 +86,19 @@ async def receive_audio(file: UploadFile = File(...)):
         "size": len(audio_data),
         "text": text,
     }
+@app.get("/audio/transcribe")
+def transcribe_latest_audio():
+    file_path = UPLOAD_DIR / "latest_recording.webm"
+
+    if not file_path.exists():
+        return {
+            "status": "no_audio",
+            "message": "No audio recording found",
+        }
+
+    text = transcribe_audio(str(file_path))
+
+    return {
+        "status": "success",
+        "text": text,
+    }
