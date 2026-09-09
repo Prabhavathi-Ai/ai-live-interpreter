@@ -87,6 +87,11 @@ The project is designed to run locally using free and open-source AI tools.
 AI Live Interpreter is being developed step by step with a focus on
 local, free, and open-source AI processing.
 
+## Speech Recognition
+
+Local Whisper is used for speech-to-text processing.
+The model runs locally without requiring a paid API.
+
 
 ## Backend API
 
