@@ -82,6 +82,11 @@ The next development stage is integrating local AI models for:
 
 The project is designed to run locally using free and open-source AI tools.
 
+## Development
+
+AI Live Interpreter is being developed step by step with a focus on
+local, free, and open-source AI processing.
+
 
 ## Backend API
 
