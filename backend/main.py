@@ -32,7 +32,8 @@ def read_root():
         "version": "1.1.1",
         "status": "ready",
         "service": "FastAPI"
-    }
+    }git add backend/main.py
+# Basic health check for the frontend
 
 @app.get("/health")
 def health_check():
