@@ -1,4 +1,4 @@
-ÿ# AI Live Interpreter
+# AI Live Interpreter
 
 An AI-powered live speech interpreter that records spoken audio, processes it locally, and translates speech between languages.
 
@@ -125,3 +125,6 @@ Future: Speech-to-Text
 Future: Translation
        ↓
 Future: Text-to-Speech
+## Local AI
+
+The project uses local AI processing for speech recognition.
