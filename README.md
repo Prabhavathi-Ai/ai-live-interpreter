@@ -22,6 +22,7 @@ Currently planned:
 - Tamil
 - Hindi
 - telugu
+- Malayalam
 
 More languages can be added later.
 
