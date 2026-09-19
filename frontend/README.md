@@ -52,3 +52,7 @@ This project is currently under active development.
 ## License
 
 This project is created for learning and development purposes.
+
+## Local AI
+
+The project uses local AI processing for speech recognition.
