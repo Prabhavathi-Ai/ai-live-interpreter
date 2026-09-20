@@ -1,26 +1,35 @@
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-MODEL_NAME = "facebook/nllb-200-distilled-600M"
+MODEL_NAME = "facebook/m2m100_418M"
+
+print("Loading translation model...")
 
 tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)
 
-tokenizer.src_lang = "eng_Latn"
+print("Translation model loaded.")
 
 
 def translate_text(text: str) -> str:
     if not text.strip():
         return ""
 
-    inputs = tokenizer(text, return_tensors="pt")
+    tokenizer.src_lang = "en"
 
-    translated_tokens = model.generate(
+    inputs = tokenizer(
+        text.strip(),
+        return_tensors="pt",
+    )
+
+    generated_tokens = model.generate(
         **inputs,
-        forced_bos_token_id=tokenizer.convert_tokens_to_ids("tam_Taml"),
+        forced_bos_token_id=tokenizer.get_lang_id("ta"),
         max_length=256,
     )
 
-    return tokenizer.batch_decode(
-        translated_tokens,
-        skip_special_tokens=True
-    )[0]
+    translation = tokenizer.batch_decode(
+        generated_tokens,
+        skip_special_tokens=True,
+    )
+
+    return translation[0]
