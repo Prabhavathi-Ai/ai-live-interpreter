@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+.env.*
+
+# Uploaded audio / user data
+backend/uploads/
+
+# Local AI models / caches
+backend/models/
+backend/.cache/
+.cache/
+huggingface/
+.huggingface/
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
