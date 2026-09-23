@@ -15,8 +15,7 @@ An AI-powered live speech interpreter that records spoken audio, processes it lo
 - active listening on both sides 
 
 # Supported Languages
-
-Currently planned:
+ planned:
 
 - English
 - Tamil
