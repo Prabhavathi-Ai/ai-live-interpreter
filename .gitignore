@@ -13,8 +13,8 @@ backend/uploads/
 backend/models/
 backend/.cache/
 .cache/
-huggingface/
 .huggingface/
+
 
 # Node / Next.js
 frontend/node_modules/
