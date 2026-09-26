@@ -2,7 +2,7 @@
 
 An AI-powered live speech interpreter that records spoken audio, processes it locally, and translate speech between languages.
 
-# Features updated
+# Features updated for live interpreter
 
 - 🎤 Microphone-based voice recording
 - 🌐 Multiple language selection
