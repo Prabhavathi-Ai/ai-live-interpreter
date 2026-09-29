@@ -18,12 +18,12 @@ An AI-powered live speech interpreter that records spoken audio, processes it lo
 
 # Supported Languages
  planned:
-
 - English
 - Tamil
 - Hindi
 - telugu
 - Malayalam
+- Urudhu
 
 More languages can be added later.
 
