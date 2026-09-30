@@ -39,7 +39,7 @@ def read_root():
 def health_check():
     return {
         "status": "healthy",
-        "service": "AI Live Interpreter"
+        
     }
 
 
