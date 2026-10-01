@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function Home() {
   const [sourceLanguage, setSourceLanguage] = useState("English");
@@ -11,6 +11,8 @@ export default function Home() {
 
   const [backendStatus, setBackendStatus] = useState("Not checked");
   const [audioStatus, setAudioStatus] = useState("No audio uploaded");
+  const [isGeneratingSpeech, setIsGeneratingSpeech] = useState(false);
+  const [isPlayingTranslation, setIsPlayingTranslation] = useState(false);
 
   const [originalText, setOriginalText] = useState("");
   const [translatedText, setTranslatedText] = useState("");
@@ -18,6 +20,27 @@ export default function Home() {
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const translationAudioRef = useRef<HTMLAudioElement | null>(null);
+  const translationAudioUrlRef = useRef<string | null>(null);
+
+  const clearTranslationAudio = () => {
+    translationAudioRef.current?.pause();
+    translationAudioRef.current = null;
+
+    if (translationAudioUrlRef.current) {
+      URL.revokeObjectURL(translationAudioUrlRef.current);
+      translationAudioUrlRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      translationAudioRef.current?.pause();
+      if (translationAudioUrlRef.current) {
+        URL.revokeObjectURL(translationAudioUrlRef.current);
+      }
+    };
+  }, []);
 
   const swapLanguages = () => {
     const currentSource = sourceLanguage;
@@ -48,7 +71,7 @@ export default function Home() {
 
   const uploadAudio = async (audioBlob: Blob) => {
     try {
-      setAudioStatus("Uploading...");
+      setAudioStatus("Uploading, transcribing, and translating...");
 
       const formData = new FormData();
 
@@ -57,6 +80,8 @@ export default function Home() {
         audioBlob,
         "recording.webm"
       );
+      formData.append("source_language", sourceLanguage);
+      formData.append("target_language", targetLanguage);
 
       const response = await fetch(
         "http://127.0.0.1:8000/audio",
@@ -66,20 +91,32 @@ export default function Home() {
         }
       );
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Upload failed");
+        throw new Error(data.detail || "Audio processing failed");
       }
 
-      setAudioStatus("Audio uploaded successfully");
-      setHasRecording(true);
+      setOriginalText(data.text || "");
+      setTranslatedText(data.translation || "");
+      setHasRecording(data.status === "success");
+      setAudioStatus(
+        data.status === "no_speech"
+          ? "No English speech was detected. Try recording again."
+          : "Transcription and translation complete."
+      );
     } catch (error) {
       console.error(error);
-      setAudioStatus("Audio upload failed");
+      setAudioStatus(
+        error instanceof Error ? error.message : "Audio processing failed"
+      );
     }
   };
 
   const startRecording = async () => {
     try {
+      clearTranslationAudio();
+      setIsPlayingTranslation(false);
       const stream =
         await navigator.mediaDevices.getUserMedia({
           audio: true,
@@ -150,6 +187,57 @@ export default function Home() {
     }
   };
 
+  const playTranslation = async () => {
+    if (isPlayingTranslation) {
+      clearTranslationAudio();
+      setIsPlayingTranslation(false);
+      setAudioStatus("Translation playback stopped.");
+      return;
+    }
+
+    try {
+      setIsGeneratingSpeech(true);
+      setAudioStatus("Generating Tamil speech locally...");
+      const response = await fetch("http://127.0.0.1:8000/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: translatedText }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.detail || "Speech generation failed");
+      }
+
+      clearTranslationAudio();
+      const audioUrl = URL.createObjectURL(await response.blob());
+      const audio = new Audio(audioUrl);
+      translationAudioUrlRef.current = audioUrl;
+      translationAudioRef.current = audio;
+      audio.onended = () => {
+        clearTranslationAudio();
+        setIsPlayingTranslation(false);
+        setAudioStatus("Translation playback finished.");
+      };
+      audio.onerror = () => {
+        clearTranslationAudio();
+        setIsPlayingTranslation(false);
+        setAudioStatus("The generated speech could not be played.");
+      };
+
+      await audio.play();
+      setIsPlayingTranslation(true);
+      setAudioStatus("Playing Tamil translation.");
+    } catch (error) {
+      setIsPlayingTranslation(false);
+      setAudioStatus(
+        error instanceof Error ? error.message : "Speech generation failed"
+      );
+    } finally {
+      setIsGeneratingSpeech(false);
+    }
+  };
+
   return (
     <main className="min-h-screen bg-slate-950 text-white">
       {/* Header */}
@@ -204,15 +292,16 @@ export default function Home() {
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 outline-none focus:border-blue-500"
               >
                 <option>English</option>
-                <option>Tamil</option>
-                <option>Hindi</option>
+                <option disabled>Tamil</option>
+                <option disabled>Hindi</option>
               </select>
             </div>
 
             <button
               onClick={swapLanguages}
-              className="rounded-xl border border-slate-700 px-5 py-3 text-xl transition hover:bg-slate-800"
-              title="Swap languages"
+              disabled
+              className="cursor-not-allowed rounded-xl border border-slate-700 px-5 py-3 text-xl opacity-40"
+              title="Only English to Tamil is currently available"
             >
               ⇄
             </button>
@@ -230,8 +319,8 @@ export default function Home() {
                 className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 outline-none focus:border-blue-500"
               >
                 <option>Tamil</option>
-                <option>English</option>
-                <option>Hindi</option>
+                <option disabled>English</option>
+                <option disabled>Hindi</option>
               </select>
             </div>
           </div>
@@ -245,6 +334,9 @@ export default function Home() {
             <span className="font-medium text-white">
               {targetLanguage}
             </span>
+          </p>
+          <p className="mt-3 text-center text-xs text-slate-500">
+            Local speech translation currently supports English to Tamil.
           </p>
         </section>
 
@@ -330,7 +422,7 @@ export default function Home() {
 
           {hasRecording && (
             <p className="mt-3 text-sm text-green-400">
-              ✓ Recording uploaded successfully
+              ✓ Transcription and translation are ready
             </p>
           )}
 
@@ -343,10 +435,15 @@ export default function Home() {
 
         <section className="mt-6 flex justify-center">
           <button
-            disabled={!translatedText}
+            disabled={!translatedText || isGeneratingSpeech}
+            onClick={playTranslation}
             className="rounded-xl border border-slate-700 bg-slate-900 px-6 py-3 text-sm font-medium transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
           >
-            🔊 Play Translation
+            {isGeneratingSpeech
+              ? "Generating Tamil Speech..."
+              : isPlayingTranslation
+                ? "Stop Translation"
+                : "Play Translation"}
           </button>
         </section>
 
