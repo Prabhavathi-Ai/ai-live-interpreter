@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import shutil
+import subprocess
 import threading
 from pathlib import Path
 from typing import Any
@@ -13,6 +14,7 @@ MODEL_NAME = "tiny"
 MODEL_DIR = Path(__file__).resolve().parent / "models" / "whisper"
 
 _load_lock = threading.Lock()
+_inference_lock = threading.Lock()
 _model: Any = None
 
 
@@ -61,5 +63,20 @@ def transcribe_audio(audio_path: str | Path, language: str = "en") -> str:
     if not path.is_file():
         raise FileNotFoundError(f"Audio file does not exist: {path}")
 
-    result = _load_model().transcribe(str(path), language=language, fp16=False)
+    try:
+        with _inference_lock:
+            result = _load_model().transcribe(
+                str(path), language=language, fp16=False
+            )
+    except subprocess.CalledProcessError as error:
+        raise ValueError(
+            "The uploaded file could not be decoded as a supported audio recording."
+        ) from error
+    except RuntimeError as error:
+        if str(error).startswith("Failed to load audio:"):
+            raise ValueError(
+                "The uploaded file could not be decoded as a supported audio recording."
+            ) from error
+        raise
+
     return result.get("text", "").strip()

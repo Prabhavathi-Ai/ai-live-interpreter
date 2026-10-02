@@ -57,9 +57,14 @@ def synthesize_speech(text: str) -> bytes:
 
     tokenizer, model, torch = _load_model()
     inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+    input_ids = inputs["input_ids"]
+    if input_ids.numel() == 0 or torch.all(input_ids == tokenizer.pad_token_id):
+        raise ValueError("Text has no characters supported by the Tamil speech model.")
 
     with _inference_lock, torch.inference_mode():
         waveform = model(**inputs).waveform.squeeze().cpu()
+        if waveform.numel() == 0:
+            raise ValueError("The Tamil speech model returned no audio.")
         samples = (waveform.clamp(-1, 1) * 32767).to(torch.int16).numpy()
 
     wav_buffer = io.BytesIO()

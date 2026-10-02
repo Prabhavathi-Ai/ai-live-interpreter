@@ -1,9 +1,11 @@
 from pathlib import Path
+import os
+from uuid import uuid4
 
 from fastapi import FastAPI, File, Form, HTTPException, Response, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from translation_service import is_translation_model_loaded, translate_text
 from tts_service import is_tts_model_loaded, synthesize_speech
@@ -22,15 +24,16 @@ app.add_middleware(
 UPLOAD_DIR = Path(__file__).resolve().parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 LATEST_RECORDING = UPLOAD_DIR / "latest_recording.webm"
+MAX_AUDIO_BYTES = 25 * 1024 * 1024
 
 
 class TranslationRequest(BaseModel):
-    text: str
-    target_language: str = "ta"
+    text: str = Field(min_length=1, max_length=5000)
+    target_language: str = Field(default="ta", max_length=16)
 
 
 class SpeechRequest(BaseModel):
-    text: str
+    text: str = Field(min_length=1, max_length=1000)
 
 
 def _validate_languages(source_language: str, target_language: str) -> None:
@@ -49,6 +52,8 @@ def _validate_languages(source_language: str, target_language: str) -> None:
 def _transcribe_and_translate(audio_path: Path) -> dict[str, str]:
     try:
         transcript = transcribe_audio(audio_path, language="en")
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from error
     except Exception as error:
         raise HTTPException(
             status_code=503,
@@ -135,15 +140,50 @@ async def receive_audio(
     target_language: str = Form("ta"),
 ):
     _validate_languages(source_language, target_language)
-    audio_data = await file.read()
+    content_type = (file.content_type or "application/octet-stream").split(";", 1)[0]
+    if not content_type.startswith("audio/") and content_type != "application/octet-stream":
+        await file.close()
+        raise HTTPException(
+            status_code=415,
+            detail="Upload an audio recording such as WebM, WAV, or MP3.",
+        )
+
+    audio_data = await file.read(MAX_AUDIO_BYTES + 1)
+    await file.close()
     if not audio_data:
         raise HTTPException(status_code=400, detail="Uploaded audio file is empty")
+    if len(audio_data) > MAX_AUDIO_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail="Audio is too large. Recordings must be 25 MB or smaller.",
+        )
 
-    LATEST_RECORDING.write_bytes(audio_data)
-    result = await run_in_threadpool(_transcribe_and_translate, LATEST_RECORDING)
+    request_id = uuid4().hex
+    processing_path = UPLOAD_DIR / f".recording-{request_id}.webm"
+    latest_temp_path = UPLOAD_DIR / f".latest-{request_id}.tmp"
+    try:
+        await run_in_threadpool(processing_path.write_bytes, audio_data)
+        await run_in_threadpool(latest_temp_path.write_bytes, audio_data)
+        await run_in_threadpool(os.replace, latest_temp_path, LATEST_RECORDING)
+        result = await run_in_threadpool(_transcribe_and_translate, processing_path)
+    except HTTPException:
+        raise
+    except OSError as error:
+        raise HTTPException(
+            status_code=500,
+            detail="The backend could not save the uploaded audio.",
+        ) from error
+    finally:
+        processing_path.unlink(missing_ok=True)
+        latest_temp_path.unlink(missing_ok=True)
+
     result.update(
         {
-            "message": "Audio transcribed and translated successfully",
+            "message": (
+                "No English speech was detected."
+                if result["status"] == "no_speech"
+                else "Audio transcribed and translated successfully"
+            ),
             "filename": LATEST_RECORDING.name,
             "size": len(audio_data),
         }
