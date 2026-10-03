@@ -12,8 +12,10 @@ import {
   type Feedback,
 } from "./components/interpreter-ui";
 
-const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://127.0.0.1:8000";
+const BACKEND_URL = (
+  process.env.NEXT_PUBLIC_BACKEND_URL ??
+  (process.env.NODE_ENV === "development" ? "http://127.0.0.1:8000" : "")
+).replace(/\/+$/, "");
 
 type ApiPayload = Record<string, unknown>;
 

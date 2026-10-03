@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import re
 import threading
-from pathlib import Path
 from typing import Any
 
+from config import settings
 
 MODEL_NAME = "Helsinki-NLP/opus-mt-en-dra"
-MODEL_CACHE_DIR = Path(__file__).resolve().parent / "models" / ".hf-cache"
+MODEL_CACHE_DIR = settings.model_dir / ".hf-cache"
 MAX_CHUNK_TOKENS = 350
 
 _load_lock = threading.Lock()

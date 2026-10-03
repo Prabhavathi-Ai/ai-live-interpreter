@@ -8,12 +8,12 @@ from __future__ import annotations
 import io
 import threading
 import wave
-from pathlib import Path
 from typing import Any
 
+from config import settings
 
 MODEL_NAME = "facebook/mms-tts-tam"
-MODEL_CACHE_DIR = Path(__file__).resolve().parent / "models" / ".hf-cache"
+MODEL_CACHE_DIR = settings.model_dir / ".hf-cache"
 MAX_TEXT_LENGTH = 1000
 
 _load_lock = threading.Lock()

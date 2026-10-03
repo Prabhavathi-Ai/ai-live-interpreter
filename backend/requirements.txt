@@ -11,6 +11,7 @@ python-multipart==0.0.32
 starlette==1.6.0
 typing-inspection==0.4.4
 typing_extensions==4.16.0
+torch==2.14.0
 uvicorn==0.52.4
 imageio-ffmpeg==0.6.0
 openai-whisper==20250625

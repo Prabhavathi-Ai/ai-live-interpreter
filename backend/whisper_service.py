@@ -9,9 +9,10 @@ import threading
 from pathlib import Path
 from typing import Any
 
+from config import settings
 
 MODEL_NAME = "tiny"
-MODEL_DIR = Path(__file__).resolve().parent / "models" / "whisper"
+MODEL_DIR = settings.model_dir / "whisper"
 
 _load_lock = threading.Lock()
 _inference_lock = threading.Lock()
