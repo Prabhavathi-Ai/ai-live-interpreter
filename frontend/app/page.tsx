@@ -519,7 +519,7 @@ export default function Home() {
             <span className="brand-copy">
               <h1 className="brand-name">AI Live Interpreter</h1>
               <span className="brand-caption">
-                Real-time English to Tamil interpretation powered by local AI
+                Speak <span aria-hidden="true">→</span> Translate <span aria-hidden="true">→</span> Connect
               </span>
             </span>
           </div>
@@ -557,73 +557,90 @@ export default function Home() {
           onToggle={handleRecording}
         />
 
-        <section
-          className="interpreter-grid"
-          aria-label="English speech and Tamil translation"
-        >
-          <TranscriptCard
-            kind="original"
-            title="Original Speech"
-            subtitle="Recognized from your voice"
-            language="English"
-            text={originalText}
-            emptyTitle="Your spoken English will appear here."
-            emptyHint="Start speaking to begin."
-            isRecording={isRecording}
-          />
+        {(originalText || translatedText) && (
+          <section
+            className="interpreter-grid"
+            aria-label="English speech and Tamil translation"
+          >
+            <TranscriptCard
+              kind="original"
+              title="Original Speech"
+              subtitle="Recognized from your voice"
+              language="English"
+              text={originalText}
+              emptyTitle="Your spoken English will appear here."
+              emptyHint="Start speaking to begin."
+              isRecording={isRecording}
+            />
 
-          <div className="flow-connector" aria-hidden="true">
-            <span className="flow-line" />
-            <span className="flow-node">
-              <Icon name="arrow" />
-            </span>
-            <span className="flow-line" />
-          </div>
+            <div className="flow-connector" aria-hidden="true">
+              <span className="flow-line" />
+              <span className="flow-node">
+                <Icon name="arrow" />
+              </span>
+              <span className="flow-line" />
+            </div>
 
-          <TranscriptCard
-            kind="translation"
-            title="Tamil Translation"
-            subtitle="Translated text"
-            language="Tamil"
-            text={translatedText}
-            emptyTitle="Your Tamil translation will appear here."
-            emptyHint="The local Tamil voice will be ready after translation."
-            isReady={hasRecording && Boolean(translatedText)}
-            footer={
-              <>
-                <div className="voice-caption">
-                  <Icon name="speaker" />
-                  <span>Listen to Tamil</span>
-                </div>
-                <PlaybackButton
-                  mode={
-                    isGeneratingSpeech
-                      ? "generating"
-                      : isPlayingTranslation
-                        ? "playing"
-                        : "idle"
-                  }
-                  disabled={
-                    !translatedText ||
-                    isProcessing ||
-                    isRecording ||
-                    !isSupportedDirection
-                  }
-                  onClick={() => void playTranslation()}
-                />
-              </>
-            }
-          />
-        </section>
+            <TranscriptCard
+              kind="translation"
+              title="Tamil Translation"
+              subtitle="Translated text"
+              language="Tamil"
+              text={translatedText}
+              emptyTitle="Your Tamil translation will appear here."
+              emptyHint="The local Tamil voice will be ready after translation."
+              isReady={hasRecording && Boolean(translatedText)}
+              footer={
+                <>
+                  <div className="voice-caption">
+                    <Icon name="speaker" />
+                    <span>Listen to Tamil</span>
+                  </div>
+                  <PlaybackButton
+                    mode={
+                      isGeneratingSpeech
+                        ? "generating"
+                        : isPlayingTranslation
+                          ? "playing"
+                          : "idle"
+                    }
+                    disabled={
+                      !translatedText ||
+                      isProcessing ||
+                      isRecording ||
+                      !isSupportedDirection
+                    }
+                    onClick={() => void playTranslation()}
+                  />
+                </>
+              }
+            />
+          </section>
+        )}
       </div>
 
       <footer className="app-footer">
+        <svg className="footer-curves" viewBox="0 0 1440 150" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 38c126 0 137 97 281 97 123 0 181-66 300-66" />
+          <path d="M1440 24c-132 0-156 111-310 111-126 0-171-66-293-66" />
+          <path d="M0 48c118 0 136 91 281 91" />
+        </svg>
         <div className="page-shell footer-content">
-          <span>AI Live Interpreter</span>
-          <span className="footer-divider" aria-hidden="true" />
-          <span>Local AI</span>
-          <span className="footer-divider" aria-hidden="true" />
-          <span>English to Tamil</span>
+          <div className="footer-note">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <circle cx="20" cy="20" r="15" />
+              <path d="m20 8 2.7 9.3L32 20l-9.3 2.7L20 32l-2.7-9.3L8 20l9.3-2.7L20 8Z" />
+              <circle cx="20" cy="20" r="3" />
+            </svg>
+            <span>From anywhere<br />to anywhere</span>
+          </div>
+          <div className="footer-note footer-note-right">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <path d="M20 3c5 5 5 10 0 15-5-5-5-10 0-15Zm0 19c5 5 5 10 0 15-5-5-5-10 0-15ZM3 20c5-5 10-5 15 0-5 5-10 5-15 0Zm19 0c5-5 10-5 15 0-5 5-10 5-15 0Z" />
+              <circle cx="20" cy="20" r="4" />
+            </svg>
+            <span>Different languages<br />Same world</span>
+          </div>
         </div>
       </footer>
     </main>
