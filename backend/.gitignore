@@ -5,4 +5,9 @@ __pycache__/
 .env.*
 !.env.example
 uploads/
+recordings/
 models/
+.cache/
+.huggingface/
+node_modules/
+.next/

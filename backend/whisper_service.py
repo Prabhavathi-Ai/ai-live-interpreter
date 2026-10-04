@@ -19,6 +19,11 @@ _inference_lock = threading.Lock()
 _model: Any = None
 
 
+def _ffmpeg_alias_name(platform: str | None = None) -> str:
+    """Return the executable alias expected by the current operating system."""
+    return "ffmpeg.exe" if (platform or os.name) == "nt" else "ffmpeg"
+
+
 def _load_model() -> Any:
     global _model
 
@@ -28,8 +33,8 @@ def _load_model() -> Any:
                 import whisper
 
                 # OpenAI Whisper calls an executable literally named ffmpeg.
-                # The bundled Windows binary has a versioned name, so add a
-                # local alias when system ffmpeg is not already available.
+                # imageio-ffmpeg bundles a versioned executable, so add a
+                # platform-appropriate local alias when ffmpeg is not on PATH.
                 if not shutil.which("ffmpeg"):
                     try:
                         import imageio_ffmpeg
@@ -37,7 +42,7 @@ def _load_model() -> Any:
                         bundled_ffmpeg = Path(imageio_ffmpeg.get_ffmpeg_exe())
                         ffmpeg_dir = MODEL_DIR / "ffmpeg"
                         ffmpeg_dir.mkdir(parents=True, exist_ok=True)
-                        ffmpeg_alias = ffmpeg_dir / "ffmpeg.exe"
+                        ffmpeg_alias = ffmpeg_dir / _ffmpeg_alias_name()
                         if not ffmpeg_alias.exists():
                             try:
                                 os.link(bundled_ffmpeg, ffmpeg_alias)

@@ -20,13 +20,33 @@ class SettingsTests(unittest.TestCase):
         settings = load_settings(
             {
                 "APP_ENV": "production",
-                "CORS_ORIGINS": "https://interpreter.example.com",
+                "CORS_ORIGINS": "https://interpreter.example.com, https://preview.example.com/",
+                "AI_MODEL_DIR": "/tmp/interpreter-models",
+                "UPLOAD_DIR": "/tmp/interpreter-uploads",
             }
         )
 
-        self.assertEqual(settings.cors_origins, ("https://interpreter.example.com",))
+        self.assertEqual(
+            settings.cors_origins,
+            ("https://interpreter.example.com", "https://preview.example.com"),
+        )
         self.assertFalse(settings.enable_api_docs)
         self.assertFalse(settings.keep_latest_recording)
+        self.assertEqual(settings.model_dir.name, "interpreter-models")
+        self.assertEqual(settings.upload_dir.name, "interpreter-uploads")
+
+    def test_production_recording_and_docs_can_only_be_enabled_explicitly(self):
+        settings = load_settings(
+            {
+                "APP_ENV": "production",
+                "CORS_ORIGINS": "https://interpreter.example.com",
+                "KEEP_LATEST_RECORDING": "true",
+                "ENABLE_API_DOCS": "true",
+            }
+        )
+
+        self.assertTrue(settings.keep_latest_recording)
+        self.assertTrue(settings.enable_api_docs)
 
     def test_production_requires_explicit_cors_origin(self):
         with self.assertRaises(ConfigurationError):

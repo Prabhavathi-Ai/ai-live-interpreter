@@ -7,19 +7,18 @@ venv/
 .env.*
 !.env.example
 
-# Uploaded audio / user data
-backend/uploads/
-
 # Local AI models / caches
-backend/models/
-backend/.cache/
-.cache/
-.huggingface/
+**/models/
+**/.cache/
+**/.huggingface/
 
+# Uploaded audio / user data
+**/uploads/
+**/recordings/
 
 # Node / Next.js
-frontend/node_modules/
-frontend/.next/
+**/node_modules/
+**/.next/
 
 # Logs
 *.log
