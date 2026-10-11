@@ -130,6 +130,7 @@ export function BackendIndicator({
       className={`backend-status backend-status-${status}`}
       onClick={onCheck}
       aria-label={`${label}. Check connection again.`}
+      aria-busy={status === "checking"}
       title="Check backend connection"
     >
       <span className="backend-dot" aria-hidden="true" />
