@@ -46,6 +46,7 @@ More languages can be added later.
 
 - Whisper
 - Local speech-to-text processing
+- using API
 
 ## Project Structure
 
