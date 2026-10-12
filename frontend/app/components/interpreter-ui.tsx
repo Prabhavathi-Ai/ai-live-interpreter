@@ -577,6 +577,11 @@ export function VoiceControl({
       !isGeneratingSpeech &&
       !isPlayingTranslation &&
       feedback.message !== "Ready when you are. Start with a short English phrase.");
+  const feedbackMessage =
+    feedback.kind === "error" &&
+    feedback.message.startsWith("Cannot reach FastAPI")
+      ? "We couldn't connect to the interpreter service. Please check your connection or try again."
+      : feedback.message;
 
   return (
     <section className={`voice-stage voice-stage-${mode}`} aria-label="Voice controls">
@@ -636,7 +641,7 @@ export function VoiceControl({
           aria-live={feedback.kind === "error" ? "assertive" : "polite"}
         >
           <Icon name={feedback.kind === "error" ? "alert" : "check"} />
-          <p>{feedback.message}</p>
+          <p>{feedbackMessage}</p>
         </div>
       )}
 
