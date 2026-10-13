@@ -19,30 +19,30 @@ const BACKEND_URL = (
 
 type ApiPayload = Record<string, unknown>;
 
+function ensureResponseOk(response: Response, operation: string): void {
+  if (!response.ok) {
+    throw new Error(requestErrorMessage(response.status, operation));
+  }
+}
+
 async function readJsonResponse(
   response: Response,
   operation: string
 ): Promise<ApiPayload> {
+  ensureResponseOk(response, operation);
+
   let body: unknown;
 
   try {
     body = await response.json();
   } catch {
-    throw new Error(
-      response.ok
-        ? `${operation} returned an unreadable response.`
-        : `${operation} failed (HTTP ${response.status}); the backend returned an unreadable error.`
-    );
+    throw new Error(`${operation} returned an unreadable response.`);
   }
 
   const payload =
     body && typeof body === "object" && !Array.isArray(body)
       ? (body as ApiPayload)
       : null;
-
-  if (!response.ok) {
-    throw new Error(requestErrorMessage(response.status, operation));
-  }
 
   if (!payload) {
     throw new Error(`${operation} returned an invalid response.`);
@@ -114,6 +114,7 @@ export default function Home() {
   const streamRef = useRef<MediaStream | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const recordingSessionRef = useRef(false);
   const translationAudioRef = useRef<HTMLAudioElement | null>(null);
   const translationAudioUrlRef = useRef<string | null>(null);
   const backendCheckControllerRef = useRef<AbortController | null>(null);
@@ -230,6 +231,7 @@ export default function Home() {
       notify("No audio was captured. Record a little longer and try again.", "error");
       return;
     }
+    if (uploadControllerRef.current) return;
 
     const controller = new AbortController();
     uploadControllerRef.current = controller;
@@ -256,23 +258,39 @@ export default function Home() {
       });
       const data = await readJsonResponse(response, "Audio processing");
 
+      if (data.status === "no_speech") {
+        if (data.text !== "" || data.translation !== "") {
+          throw new Error("Audio processing returned an invalid response.");
+        }
+        setOriginalText("");
+        setTranslatedText("");
+        setHasRecording(false);
+        notify("No English speech was detected. Try recording again.", "error");
+        return;
+      }
+
       if (
-        (data.status !== "success" && data.status !== "no_speech") ||
+        data.status !== "success" ||
         typeof data.text !== "string" ||
-        typeof data.translation !== "string"
+        !data.text.trim()
       ) {
         throw new Error("Audio processing returned an invalid response.");
       }
 
-      setOriginalText(data.text || "");
-      setTranslatedText(data.translation || "");
-      setHasRecording(data.status === "success");
-      notify(
-        data.status === "no_speech"
-          ? "No English speech was detected. Try recording again."
-          : "Translation ready.",
-        data.status === "no_speech" ? "error" : "success"
-      );
+      setOriginalText(data.text.trim());
+      if (typeof data.translation !== "string" || !data.translation.trim()) {
+        setTranslatedText("");
+        setHasRecording(false);
+        notify(
+          "We recognized your English speech, but couldn't prepare the Tamil translation. Try recording again.",
+          "error"
+        );
+        return;
+      }
+
+      setTranslatedText(data.translation.trim());
+      setHasRecording(true);
+      notify("Translation ready.", "success");
     } catch (error) {
       if (mountedRef.current) {
         notify(networkErrorMessage(error, "audio processing"), "error");
@@ -287,7 +305,15 @@ export default function Home() {
   };
 
   const startRecording = async () => {
-    if (isProcessing || isGeneratingSpeech || isRecording) return;
+    if (
+      isProcessing ||
+      isGeneratingSpeech ||
+      isRecording ||
+      recordingSessionRef.current ||
+      uploadControllerRef.current
+    ) {
+      return;
+    }
     if (!isSupportedDirection) {
       notify("Only English to Tamil translation is available right now.");
       return;
@@ -308,6 +334,7 @@ export default function Home() {
     let stream: MediaStream | null = null;
     let recordingFailed = false;
 
+    recordingSessionRef.current = true;
     try {
       clearTranslationAudio();
       setIsPlayingTranslation(false);
@@ -315,6 +342,7 @@ export default function Home() {
       stream = activeStream;
       if (!mountedRef.current) {
         activeStream.getTracks().forEach((track) => track.stop());
+        recordingSessionRef.current = false;
         return;
       }
 
@@ -349,6 +377,7 @@ export default function Home() {
         });
         streamRef.current = null;
         mediaRecorderRef.current = null;
+        recordingSessionRef.current = false;
         setIsRecording(false);
 
         if (!mountedRef.current) return;
@@ -368,6 +397,7 @@ export default function Home() {
         recordingFailed = true;
         stream?.getTracks().forEach((track) => track.stop());
         streamRef.current = null;
+        recordingSessionRef.current = false;
         setIsRecording(false);
         setIsProcessing(false);
         notify("The browser could not finish recording audio. Try again.", "error");
@@ -384,6 +414,7 @@ export default function Home() {
       stream?.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
       mediaRecorderRef.current = null;
+      recordingSessionRef.current = false;
       if (mountedRef.current) {
         setIsRecording(false);
         setIsProcessing(false);
@@ -402,6 +433,7 @@ export default function Home() {
       try {
         mediaRecorderRef.current.stop();
       } catch (error) {
+        recordingSessionRef.current = false;
         setIsProcessing(false);
         notify(microphoneErrorMessage(error), "error");
       }
@@ -419,7 +451,7 @@ export default function Home() {
   };
 
   const playTranslation = async () => {
-    if (isGeneratingSpeech) {
+    if (isGeneratingSpeech || speechControllerRef.current) {
       speechControllerRef.current?.abort();
       notify("Cancelling Tamil speech generation...");
       return;
@@ -454,11 +486,7 @@ export default function Home() {
         body: JSON.stringify({ text: translatedText }),
         signal: controller.signal,
       });
-
-      if (!response.ok) {
-        const error = await readJsonResponse(response, "Tamil speech generation");
-        throw new Error(String(error.detail || "Tamil speech generation failed."));
-      }
+      ensureResponseOk(response, "Tamil speech generation");
 
       const contentType = response.headers.get("content-type")?.toLowerCase() ?? "";
       if (!contentType.includes("audio/wav")) {
