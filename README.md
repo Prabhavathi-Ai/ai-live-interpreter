@@ -130,4 +130,4 @@ Future: Translation
 Future: Text-to-Speech
 ## Local AI
 
-The project uses local AI processing for speech recognition.
+The project uses local AI processing for speech recognition and future update will be there
