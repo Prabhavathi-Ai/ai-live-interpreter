@@ -888,6 +888,72 @@ select:focus-visible {
   line-height: 1.5;
 }
 
+.card-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+}
+
+.copy-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.copy-button {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid #d9c5a4;
+  border-radius: 10px;
+  background: #fff7ee;
+  color: #74471c;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 640;
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+
+.copy-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: #c99d68;
+  background: #fff3df;
+}
+
+.copy-button:disabled {
+  border-color: #eae2d8;
+  background: #f8f5ef;
+  color: #aaa093;
+  cursor: not-allowed;
+}
+
+.copy-button-success {
+  border-color: #bfdab7;
+  background: #f2faef;
+  color: #3f7242;
+}
+
+.copy-button-icon {
+  width: 14px;
+  height: 14px;
+}
+
+.copy-status {
+  color: #5f8d57;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  text-align: right;
+}
+
+.copy-status-error {
+  color: #a84d39;
+}
+
 .flow-connector {
   display: flex;
   min-width: 0;

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   BackendIndicator,
+  CopyTextButton,
   Icon,
   LanguageSwitcher,
   PlaybackButton,
@@ -599,6 +600,14 @@ export default function Home() {
               emptyTitle="Your spoken English will appear here."
               emptyHint="Start speaking to begin."
               isRecording={isRecording}
+              copyButton={
+                <CopyTextButton
+                  text={originalText}
+                  label="Copy recognized English transcript"
+                  successLabel="Copied!"
+                  failureMessage="Clipboard access was blocked. Please allow access and try again."
+                />
+              }
             />
 
             <div className="flow-connector" aria-hidden="true">
@@ -618,6 +627,14 @@ export default function Home() {
               emptyTitle="Your Tamil translation will appear here."
               emptyHint="The local Tamil voice will be ready after translation."
               isReady={hasRecording && Boolean(translatedText)}
+              copyButton={
+                <CopyTextButton
+                  text={translatedText}
+                  label="Copy Tamil translation"
+                  successLabel="Copied!"
+                  failureMessage="Clipboard access was blocked. Please allow access and try again."
+                />
+              }
               footer={
                 <>
                   <div className="voice-caption">

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 export type BackendState = "checking" | "healthy" | "offline";
 export type Feedback = {
@@ -16,6 +16,7 @@ type IconName =
   | "stop"
   | "speaker"
   | "check"
+  | "copy"
   | "alert"
   | "spinner";
 
@@ -93,6 +94,13 @@ export function Icon({
       return (
         <svg {...shared}>
           <path d="m5 12 4 4L19 6" />
+        </svg>
+      );
+    case "copy":
+      return (
+        <svg {...shared}>
+          <rect x="9" y="9" width="11" height="11" rx="2" />
+          <path d="M5 15V7a2 2 0 0 1 2-2h8" />
         </svg>
       );
     case "alert":
@@ -380,6 +388,66 @@ function TamilCultureIllustration() {
   );
 }
 
+export function CopyTextButton({
+  text,
+  label,
+  successLabel = "Copied!",
+  failureMessage = "Clipboard access was blocked. Please allow access and try again.",
+}: {
+  text: string;
+  label: string;
+  successLabel?: string;
+  failureMessage?: string;
+}) {
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "error">("idle");
+
+  useEffect(() => {
+    if (copyState === "idle") return;
+
+    const timeout = window.setTimeout(() => setCopyState("idle"), 1800);
+    return () => window.clearTimeout(timeout);
+  }, [copyState]);
+
+  const handleCopy = async () => {
+    if (!text) return;
+
+    try {
+      if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+        throw new Error("Clipboard API unavailable");
+      }
+
+      await navigator.clipboard.writeText(text);
+      setCopyState("copied");
+    } catch {
+      setCopyState("error");
+    }
+  };
+
+  const statusText =
+    copyState === "copied"
+      ? successLabel
+      : copyState === "error"
+        ? failureMessage
+        : "";
+
+  return (
+    <div className="copy-row" aria-live="polite">
+      <button
+        type="button"
+        className={`copy-button ${copyState === "copied" ? "copy-button-success" : ""}`}
+        disabled={!text}
+        onClick={() => void handleCopy()}
+        aria-label={label}
+        title={label}
+      >
+        <Icon name={copyState === "copied" ? "check" : "copy"} className="copy-button-icon" />
+        <span>{copyState === "copied" ? successLabel : copyState === "error" ? "Try again" : "Copy"}</span>
+      </button>
+      {statusText && <span className={`copy-status ${copyState === "error" ? "copy-status-error" : ""}`}>{statusText}</span>}
+    </div>
+  );
+}
+
 export function TranscriptCard({
   kind,
   title,
@@ -390,6 +458,7 @@ export function TranscriptCard({
   emptyHint,
   isRecording = false,
   isReady = false,
+  copyButton,
   footer,
 }: {
   kind: "original" | "translation";
@@ -401,6 +470,7 @@ export function TranscriptCard({
   emptyHint: string;
   isRecording?: boolean;
   isReady?: boolean;
+  copyButton?: ReactNode;
   footer?: ReactNode;
 }) {
   const icon = kind === "original" ? "microphone" : "translate";
@@ -452,6 +522,8 @@ export function TranscriptCard({
           </div>
         )}
       </div>
+
+      {copyButton && <div className="card-actions">{copyButton}</div>}
 
       {footer && <div className="translation-card-footer">{footer}</div>}
     </article>
