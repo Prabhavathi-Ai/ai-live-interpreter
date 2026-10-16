@@ -330,3 +330,8 @@ AI pipeline: Speech recognition → English-to-Tamil translation → Tamil speec
 ---
 
 Built to make spoken-language communication more accessible through AI-powered speech processing and translation.
+
+
+---
+
+Upgraded version 
