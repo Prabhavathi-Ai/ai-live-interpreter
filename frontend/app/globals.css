@@ -69,6 +69,7 @@ select:focus-visible {
   border-radius: 50%;
   content: "";
   pointer-events: none;
+  animation: float-orb 14s ease-in-out infinite alternate;
 }
 
 .interpreter-app::before {
@@ -81,6 +82,8 @@ select:focus-visible {
   right: -158px;
   bottom: 54px;
   box-shadow: 0 0 0 12px rgb(232 196 139 / 6%), 0 0 0 26px rgb(232 196 139 / 4%);
+  animation-duration: 18s;
+  animation-direction: alternate-reverse;
 }
 
 .page-shell {
@@ -93,6 +96,7 @@ select:focus-visible {
   z-index: 1;
   border-bottom: 1px solid rgb(223 210 192 / 58%);
   background: rgb(255 253 248 / 66%);
+  backdrop-filter: blur(6px);
 }
 
 .topbar-content {
@@ -101,6 +105,7 @@ select:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 18px;
+  animation: fade-slide-up 420ms ease-out both;
 }
 
 .brand-lockup {
@@ -227,7 +232,16 @@ select:focus-visible {
     radial-gradient(ellipse at 50% 53%, rgb(255 255 255 / 93%), transparent 67%),
     linear-gradient(155deg, #fffefd 0%, #fffdf9 100%);
   box-shadow: 0 14px 36px rgb(124 87 44 / 7%), inset 0 1px #fff;
-  transition: border-color 180ms ease, box-shadow 180ms ease;
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 220ms ease;
+  animation: fade-slide-up 520ms ease-out both;
+}
+
+.language-hero-card:nth-child(1) {
+  animation-delay: 60ms;
+}
+
+.language-hero-card:nth-child(3) {
+  animation-delay: 120ms;
 }
 
 .language-hero-card::after {
@@ -245,6 +259,7 @@ select:focus-visible {
 .language-hero-card:hover {
   border-color: #e5d6c0;
   box-shadow: 0 17px 40px rgb(124 87 44 / 10%), inset 0 1px #fff;
+  transform: translateY(-2px);
 }
 
 .language-hero-english {
@@ -281,6 +296,12 @@ select:focus-visible {
   background: rgb(255 255 255 / 94%);
   box-shadow: 0 3px 9px rgb(48 65 82 / 5%), inset 0 1px #fff;
   cursor: pointer;
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.language-select:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px rgb(48 65 82 / 7%), inset 0 1px #fff;
 }
 
 .language-hero-tamil .language-select {
@@ -364,6 +385,12 @@ select:focus-visible {
   max-width: 440px;
   height: 242px;
   overflow: visible;
+  animation: drift-slow 10s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+
+.language-hero-tamil .language-art {
+  animation-duration: 12s;
 }
 
 .language-hero-caption {
@@ -502,6 +529,7 @@ select:focus-visible {
   cursor: pointer;
   box-shadow: 0 7px 20px rgb(156 83 28 / 22%), inset 0 1px rgb(255 255 255 / 24%);
   transition: transform 170ms ease, box-shadow 170ms ease, background-color 170ms ease;
+  animation: mic-lift 3.2s ease-in-out infinite;
 }
 
 .mic-button svg {
@@ -1152,6 +1180,45 @@ select:focus-visible {
   }
 }
 
+@keyframes float-orb {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.98);
+  }
+  100% {
+    transform: translate3d(18px, 18px, 0) scale(1.04);
+  }
+}
+
+@keyframes drift-slow {
+  0% {
+    transform: translateY(0) rotate(0deg);
+  }
+  100% {
+    transform: translateY(-6px) rotate(0.8deg);
+  }
+}
+
+@keyframes mic-lift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes fade-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @keyframes text-in {
   from {
     transform: translateY(4px);
@@ -1495,6 +1562,23 @@ select:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .backend-status-checking .backend-dot,
+  .mic-orbit-active .mic-orbit-ring-outer,
+  .mic-orbit-active .mic-orbit-ring-inner,
+  .mic-orbit-active .mic-wave i,
+  .processing-track span,
+  .recording-badge-dot,
+  .icon-spinner,
+  .language-art,
+  .interpreter-app::before,
+  .interpreter-app::after,
+  .mic-button,
+  .language-hero-card,
+  .topbar-content,
+  .transcript-text {
+    animation: none !important;
+  }
+
   *,
   *::before,
   *::after {
