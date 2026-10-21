@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { recordingFileName } from "./audio-format";
 import {
   BackendIndicator,
   CopyTextButton,
@@ -244,11 +245,7 @@ export default function Home() {
 
       const formData = new FormData();
 
-      formData.append(
-        "file",
-        audioBlob,
-        "recording.webm"
-      );
+      formData.append("file", audioBlob, recordingFileName(audioBlob.type));
       formData.append("source_language", sourceLanguage);
       formData.append("target_language", targetLanguage);
 
@@ -434,7 +431,18 @@ export default function Home() {
       try {
         mediaRecorderRef.current.stop();
       } catch (error) {
+        const recorder = mediaRecorderRef.current;
+        if (recorder) {
+          recorder.ondataavailable = null;
+          recorder.onerror = null;
+          recorder.onstop = null;
+        }
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
+        mediaRecorderRef.current = null;
+        audioChunksRef.current = [];
         recordingSessionRef.current = false;
+        setIsRecording(false);
         setIsProcessing(false);
         notify(microphoneErrorMessage(error), "error");
       }

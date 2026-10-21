@@ -10,6 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from starlette.responses import JSONResponse
 
+from audio_format import audio_suffix_for_content_type
 from config import settings
 from translation_service import is_translation_model_loaded, translate_text
 from tts_service import is_tts_model_loaded, synthesize_speech
@@ -224,7 +225,9 @@ async def receive_audio(
         )
 
     request_id = uuid4().hex
-    processing_path = UPLOAD_DIR / f".recording-{request_id}.webm"
+    processing_path = UPLOAD_DIR / (
+        f".recording-{request_id}{audio_suffix_for_content_type(content_type)}"
+    )
     latest_temp_path = (
         UPLOAD_DIR / f".latest-{request_id}.tmp"
         if settings.keep_latest_recording
