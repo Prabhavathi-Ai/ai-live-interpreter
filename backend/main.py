@@ -10,7 +10,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from starlette.responses import JSONResponse
 
-from audio_format import audio_suffix_for_content_type
+from audio_format import (
+    audio_suffix_for_content_type,
+    is_supported_audio_content_type,
+)
 from config import settings
 from translation_service import is_translation_model_loaded, translate_text
 from tts_service import is_tts_model_loaded, synthesize_speech
@@ -125,7 +128,10 @@ def _transcribe_and_translate(audio_path: Path) -> dict[str, str]:
     try:
         transcript = transcribe_audio(audio_path, language="en")
     except ValueError as error:
-        raise HTTPException(status_code=422, detail=str(error)) from error
+        raise HTTPException(
+            status_code=422,
+            detail="Uploaded audio could not be decoded as a supported recording.",
+        ) from error
     except Exception as error:
         logger.exception("Local speech recognition failed")
         raise HTTPException(status_code=503, detail="Local speech recognition failed.") from error
@@ -183,10 +189,9 @@ def audio_status():
 
 @app.post("/translate")
 def translate(request: TranslationRequest):
+    _validate_languages("en", request.target_language)
     try:
         translated_text = translate_text(request.text, request.target_language)
-    except ValueError as error:
-        raise HTTPException(status_code=422, detail=str(error)) from error
     except Exception as error:
         logger.exception("Local translation failed")
         raise HTTPException(status_code=503, detail="Local translation failed.") from error
@@ -205,17 +210,17 @@ async def receive_audio(
     source_language: str = Form("en"),
     target_language: str = Form("ta"),
 ):
-    _validate_languages(source_language, target_language)
-    content_type = (file.content_type or "").split(";", 1)[0].strip().casefold()
-    if not content_type.startswith("audio/"):
+    try:
+        _validate_languages(source_language, target_language)
+        content_type = (file.content_type or "").split(";", 1)[0].strip().casefold()
+        if not is_supported_audio_content_type(content_type):
+            raise HTTPException(
+                status_code=415,
+                detail="Unsupported audio file type. Upload WebM, WAV, OGG, MP3, MP4, or AAC audio.",
+            )
+        audio_data = await file.read(MAX_AUDIO_BYTES + 1)
+    finally:
         await file.close()
-        raise HTTPException(
-            status_code=415,
-            detail="Upload an audio recording such as WebM, WAV, or MP3.",
-        )
-
-    audio_data = await file.read(MAX_AUDIO_BYTES + 1)
-    await file.close()
     if not audio_data:
         raise HTTPException(status_code=400, detail="Uploaded audio file is empty")
     if len(audio_data) > MAX_AUDIO_BYTES:

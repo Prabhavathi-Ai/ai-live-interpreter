@@ -16,3 +16,9 @@ def audio_suffix_for_content_type(content_type: str | None) -> str:
     """Return a safe file suffix based on an uploaded audio MIME type."""
     mime_type = (content_type or "").split(";", 1)[0].strip().casefold()
     return AUDIO_SUFFIXES.get(mime_type, ".audio")
+
+
+def is_supported_audio_content_type(content_type: str | None) -> bool:
+    """Return whether an uploaded MIME type maps to a supported audio container."""
+    mime_type = (content_type or "").split(";", 1)[0].strip().casefold()
+    return mime_type in AUDIO_SUFFIXES

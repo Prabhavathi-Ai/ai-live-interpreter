@@ -1,6 +1,9 @@
 import unittest
 
-from audio_format import audio_suffix_for_content_type
+from audio_format import (
+    audio_suffix_for_content_type,
+    is_supported_audio_content_type,
+)
 
 
 class AudioFormatTests(unittest.TestCase):
@@ -17,6 +20,11 @@ class AudioFormatTests(unittest.TestCase):
     def test_unknown_type_uses_a_non_misleading_suffix(self):
         self.assertEqual(audio_suffix_for_content_type("audio/custom"), ".audio")
         self.assertEqual(audio_suffix_for_content_type(None), ".audio")
+
+    def test_only_known_audio_containers_are_supported(self):
+        self.assertTrue(is_supported_audio_content_type("audio/webm;codecs=opus"))
+        self.assertFalse(is_supported_audio_content_type("audio/custom"))
+        self.assertFalse(is_supported_audio_content_type("image/png"))
 
 
 if __name__ == "__main__":
