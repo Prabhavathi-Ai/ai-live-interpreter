@@ -1,11 +1,23 @@
+import io
 import tempfile
 import unittest
+import wave
 from pathlib import Path
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
 import main
+
+
+def _valid_wav_bytes():
+    buffer = io.BytesIO()
+    with wave.open(buffer, "wb") as recording:
+        recording.setnchannels(1)
+        recording.setsampwidth(2)
+        recording.setframerate(48000)
+        recording.writeframes(b"\x00\x00" * 1200)
+    return buffer.getvalue()
 
 
 class AudioEndpointTests(unittest.TestCase):
@@ -54,7 +66,7 @@ class AudioEndpointTests(unittest.TestCase):
         self.assertEqual(response.status_code, 413)
         self.assertIn("configured limit is 4 bytes", response.json()["detail"])
 
-    def test_unsupported_audio_data_returns_safe_client_error(self):
+    def test_transcription_decode_error_returns_safe_client_error(self):
         with patch.object(
             main,
             "transcribe_audio",
@@ -62,7 +74,7 @@ class AudioEndpointTests(unittest.TestCase):
         ):
             response = self.client.post(
                 "/audio",
-                files={"file": ("recording.webm", b"invalid audio", "audio/webm")},
+                files={"file": ("recording.wav", _valid_wav_bytes(), "audio/wav")},
             )
 
         self.assertEqual(response.status_code, 422)
@@ -71,6 +83,31 @@ class AudioEndpointTests(unittest.TestCase):
             "Uploaded audio could not be decoded as a supported recording.",
         )
         self.assertNotIn("private decoder details", response.text)
+
+    def test_invalid_content_is_rejected_before_transcription(self):
+        invalid_uploads = (
+            ("text disguised as WebM", b"ordinary text", "audio/webm"),
+            ("WAV declared as WebM", _valid_wav_bytes(), "audio/webm"),
+            ("truncated WebM", b"\x1a\x45\xdf\xa3", "audio/webm"),
+        )
+        with patch.object(main, "transcribe_audio") as transcribe_audio:
+            for label, contents, content_type in invalid_uploads:
+                with self.subTest(label=label):
+                    response = self.client.post(
+                        "/audio",
+                        files={
+                            "file": ("recording.webm", contents, content_type)
+                        },
+                    )
+                    self.assertEqual(response.status_code, 422)
+                    self.assertEqual(
+                        response.json()["detail"],
+                        (
+                            "Uploaded audio is malformed or does not match its "
+                            "declared type."
+                        ),
+                    )
+            transcribe_audio.assert_not_called()
 
     def test_unsupported_translation_language_returns_validation_error(self):
         response = self.client.post(
@@ -106,7 +143,9 @@ class AudioEndpointTests(unittest.TestCase):
             ):
                 response = self.client.post(
                     "/audio",
-                    files={"file": ("recording.webm", b"audio data", "audio/webm")},
+                    files={
+                        "file": ("recording.wav", _valid_wav_bytes(), "audio/wav")
+                    },
                 )
 
             self.assertEqual(response.status_code, 200)
@@ -133,7 +172,9 @@ class AudioEndpointTests(unittest.TestCase):
             ):
                 response = self.client.post(
                     "/audio",
-                    files={"file": ("recording.webm", b"audio data", "audio/webm")},
+                    files={
+                        "file": ("recording.wav", _valid_wav_bytes(), "audio/wav")
+                    },
                 )
 
             self.assertEqual(response.status_code, 503)
@@ -161,7 +202,9 @@ class AudioEndpointTests(unittest.TestCase):
             ):
                 response = self.client.post(
                     "/audio",
-                    files={"file": ("recording.webm", b"audio data", "audio/webm")},
+                    files={
+                        "file": ("recording.wav", _valid_wav_bytes(), "audio/wav")
+                    },
                 )
 
             self.assertEqual(response.status_code, 503)

@@ -13,6 +13,7 @@ from starlette.responses import JSONResponse
 from audio_format import (
     audio_suffix_for_content_type,
     is_supported_audio_content_type,
+    is_valid_audio_file,
 )
 from config import settings
 from translation_service import is_translation_model_loaded, translate_text
@@ -240,6 +241,23 @@ async def receive_audio(
     )
     try:
         await run_in_threadpool(processing_path.write_bytes, audio_data)
+        try:
+            is_valid_audio = await run_in_threadpool(
+                is_valid_audio_file, processing_path, content_type
+            )
+        except (OSError, RuntimeError) as error:
+            logger.exception("Audio content validation could not run")
+            raise HTTPException(
+                status_code=503,
+                detail="Audio content validation is temporarily unavailable.",
+            ) from error
+        if not is_valid_audio:
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "Uploaded audio is malformed or does not match its declared type."
+                ),
+            )
         if latest_temp_path is not None:
             await run_in_threadpool(latest_temp_path.write_bytes, audio_data)
             await run_in_threadpool(os.replace, latest_temp_path, LATEST_RECORDING)
