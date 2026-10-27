@@ -5,16 +5,25 @@ An AI-powered English-to-Tamil speech interpretation web application.
 AI Live Interpreter allows users to record spoken English, convert speech into text, translate the text into Tamil, and generate Tamil speech for playback through a simple, responsive web interface.
 
 ✨ Features
+🎙️ Speech Recognition
+Transcribes recorded audio into text using OpenAI Whisper.
+🌐 AI Translation
+Converts English text into Tamil using a locally run translation model.
+🔊 Tamil Text-to-Speech
+Generates natural Tamil audio using a multilingual speech synthesis model.
+🔄 Language Interface
+Features English and Tamil cards with an intuitive language-swap control.
+📱 Responsive UI
+Delivers an optimized layout for both desktop and mobile screens.
+⚡ Backend Health Check
+Displays live connectivity and model availability status.
+🛡️ Input Validation
+Sanitizes audio uploads and incoming request payloads.
+🔒 Configurable CORS
+Secures the backend by restricting access to authorized frontend origins.
+🧩 Modular Architecture
+Decouples the frontend, API, transcription, translation, and speech generation layers.
 
-- 🎙️ Speech Recognition: Transcribes recorded speech using OpenAI Whisper.
-- 🌐 AI Translation: Translates English text into Tamil using a locally run translation model.
-- 🔊 Tamil Text-to-Speech: Generates Tamil audio using a multilingual speech synthesis model.
-- 🔄 Language Interface: English and Tamil language cards with a language-swap control.
-- 📱 Responsive UI: Designed for desktop and mobile screens.
-- ⚡ Backend Health Check: Displays backend connectivity status.
-- 🛡️ Input Validation: Validates audio uploads and request inputs.
-- 🔒 Configurable CORS: Controls which frontend origins can access the backend.
-- 🧩 Modular Architecture: Separates the frontend, API, transcription, translation, and speech generation.
 
 🛠️ Technology Stack
 
