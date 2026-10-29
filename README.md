@@ -1,4 +1,9 @@
-AI Live Interpreter 🎙️
+How It Works
+Record English speech.
+Convert speech into text.
+Translate English text into Tamil.
+Generate Tamil audio.
+Play the translated speech.AI Live Interpreter 🎙️
 
 An AI-powered English-to-Tamil speech interpretation web application.
 
