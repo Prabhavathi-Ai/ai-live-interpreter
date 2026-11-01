@@ -554,7 +554,7 @@ export default function Home() {
               <Icon name="brand" />
             </span>
             <span className="brand-copy">
-              <h1 className="brand-name">AI Live Interpreter</h1>
+              <h1 className="brand-name">AI Live Interpreter Pro</h1>
               <span className="brand-caption">
                 Speak <span aria-hidden="true">→</span> Translate <span aria-hidden="true">→</span> Connect
               </span>
